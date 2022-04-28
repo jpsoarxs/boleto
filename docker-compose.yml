@@ -1,0 +1,12 @@
+version: "3.7"
+services:
+  app:
+    container_name: app
+    restart: always
+    build: .
+    env_file: .env
+    environment:
+      - PORT=${PORT}
+      - NODE_ENV=production
+    ports:
+      - 3000:3000
