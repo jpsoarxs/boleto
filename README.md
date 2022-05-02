@@ -32,7 +32,7 @@ Instale as dependências
 Inicie o servidor
 
 ```bash
-  npm run start
+  npm start
   npm run dev
 ```
 
@@ -42,6 +42,14 @@ Para fazer o deploy desse projeto utilizando o docker
 
 ```bash
   docker-compose up
+```
+
+## [Deploy] Test
+
+Para fazer os testes unitarios utiliazando o Jest
+
+```bash
+  npm test
 ```
 
 

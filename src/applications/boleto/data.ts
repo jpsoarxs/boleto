@@ -1,21 +1,20 @@
-function getDate(boleto: string) {
-    boleto = boleto.replace(/( |\.)/g, '');
+function getDate(boleto: string, isConvenio: boolean) {
+    boleto = boleto.replace(/( |\.|-)/g, '');
 
-    const codDate = parseInt(boleto.slice(33, 37));
-    const date = new Date('10/07/1997');
+    const codDate = isConvenio ? parseInt(boleto.slice(0, 4)) : parseInt(boleto.slice(33, 37));
+    const date = new Date('1997-10-07');
 
     date.setTime(date.getTime() + (codDate * 24 * 60 * 60 * 1000));
 
     const currentDate = ("0" + (date.getDate())).slice(-2) + '/' + ("0" + (date.getMonth() + 1)).slice(-2) + '/' + date.getFullYear()
 
-    return isValidDate(currentDate) ? currentDate : 'Data não encontrada';
+    return currentDate
 }
 
-function getAmount(boleto: string) {
-    boleto = boleto.replace(/( |\.)/g, '');
-
-    const codAmount: string = boleto.slice(37, 47);
-    var valor = parseFloat(codAmount).toString()
+function getAmount(boleto: string, isConvenio: boolean) {
+    boleto = boleto.replace(/( |\.|-)/g, '');
+    const amount = isConvenio ? boleto.slice(4, 11) + boleto.slice(12, 16) : boleto.slice(37, 47);
+    var valor = parseFloat(amount).toString()
 
     let currentAmount
 
@@ -31,6 +30,7 @@ function getAmount(boleto: string) {
 }
 
 function getBarCode(boleto: string) {
+    boleto = boleto.replace(/( |\.|-)/g, '');
     const barCode = boleto.substr(0, 4) +
         boleto.substr(32, 15) +
         boleto.substr(4, 5) +
@@ -38,10 +38,6 @@ function getBarCode(boleto: string) {
         boleto.substr(21, 10);
 
     return barCode
-}
-
-function isValidDate(dateObject: string) {
-    return new Date(dateObject).toString() !== 'Invalid Date';
 }
 
 export default { getDate, getAmount, getBarCode };

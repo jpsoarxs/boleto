@@ -2,11 +2,13 @@ import getBoleto from './data'
 
 function boleto(boleto: string) {
     return new Promise((resolve, reject) => {
+        boleto = boleto.replace(/( |\.|-)/g, '');
+
         if (!/^[0-9]{47}$/.test(boleto)) {
-            reject('O formato do boleto é invalido, por favor reveja os dados informados');
+            reject(new Error('O formato do boleto é invalido'));
         }
 
-        let blocos = []
+        let blocos: string[] = []
 
         blocos[0] = boleto.slice(0, 10);
         blocos[1] = boleto.slice(10, 21);
@@ -15,24 +17,59 @@ function boleto(boleto: string) {
         let isValid: boolean[] = []
 
         blocos.forEach((bloco) => {
-            const result = boletoModulo10(bloco);
+            const result = modulo10(bloco);
 
             if (result == parseInt(bloco[bloco.length - 1])) {
                 isValid.push(true)
-            } else { reject('Não foi possivel validar as linhas digitaveis do boleto') }
+            } else { reject(new Error('Não foi possivel validar os dados desse boleto')) }
         })
 
         const barCode = getBoleto.getBarCode(boleto)
 
         if (boletoModulo11(barCode) === parseInt(barCode.slice(4, 5))) {
             isValid.push(true)
-        } else { reject('Não foi possivel validar o código de barra do boleto') }
+        } else { reject(new Error('Não foi possivel validar o código de barra do boleto')) }
 
         resolve(isValid.length === 4);
     });
 }
 
-function boletoModulo10(bloco: string) {
+function convenio(barCode: string) {
+    return new Promise((resolve, reject) => {
+        barCode = barCode.replace(/( |\.|-)/g, '');
+
+        if (!/^[0-9]{48}$/.test(barCode)) {
+            reject(new Error('O formato do código de barra é invalido'))
+        }
+
+        let blocks: string[] = []
+
+        blocks[0] = barCode.slice(0, 12);
+        blocks[1] = barCode.slice(12, 24);
+        blocks[2] = barCode.slice(24, 36);
+        blocks[3] = barCode.slice(36, 48);
+
+        const isM10 = ['6', '7'].indexOf(barCode[2]) !== -1
+
+        blocks.forEach((block) => {
+            if (isM10) {
+                const result = modulo10(block);
+
+                if (result == parseInt(block[block.length - 1])) {
+                    resolve(true)
+                } else { reject(new Error('Não foi possivel validar os dados desse boleto')) }
+            } else {
+                const result = convenioModulo11(block);
+
+                if (result == parseInt(block[block.length - 1])) {
+                    resolve(true)
+                } else { reject(new Error('Não foi possivel validar o código de barra do boleto')) }
+            }
+        })
+    })
+}
+
+function modulo10(bloco: string) {
     const item: string = bloco.slice(0, bloco.length - 1);
     const convertToListInt = item.split('').map(i => parseInt(i));
 
@@ -54,8 +91,33 @@ function boletoModulo10(bloco: string) {
     return (Math.ceil(total / 10) * 10) - total;
 }
 
-function boletoModulo11(barCod: string) {
-    const formatedBarCode = barCod.slice(0, 4) + barCod.slice(5, 44)
+function convenioModulo11(barCode: string) {
+    const convertToListInt = barCode.split('').map(i => parseInt(i));
+
+    convertToListInt.reverse().shift()
+
+    let total = 0
+
+    convertToListInt.forEach((value: number, index: number) => {
+        total += value * (2 + (index >= 8 ? index - 8 : index))
+    })
+
+    let rest = total % 11;
+    let result
+
+    if (rest === 0 || rest === 1) {
+        result = 0
+    } else if (rest === 10) {
+        result = 1
+    } else {
+        result = (Math.ceil(total / 11) * 11) - total;
+    }
+
+    return result
+}
+
+function boletoModulo11(barCode: string) {
+    const formatedBarCode = barCode.slice(0, 4) + barCode.slice(5, 44)
     const convertToListInt = formatedBarCode.split('').map(i => parseInt(i));
 
     convertToListInt.reverse()
@@ -77,4 +139,4 @@ function boletoModulo11(barCod: string) {
     return digito
 }
 
-export default { boleto };
+export default { boleto, convenio };
