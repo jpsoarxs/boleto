@@ -44,7 +44,7 @@ Para fazer o deploy desse projeto utilizando o docker
   docker-compose up
 ```
 
-## [Deploy] Test
+## Test
 
 Para fazer os testes unitarios utiliazando o Jest
 
